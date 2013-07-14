@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" width="317"  height="490"
+					   creationComplete="displayUsage()"  backgroundColor="#A8D3DE">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			import mx.controls.Alert;
+			
+			import spark.components.TextArea;
+			
+			private var TFTNext:String = "nice";
+			
+			//Tit for Tat 2010 Was suggested by Tony S. as a method to update the
+			//principal behind Tit for Tat that is stated as 
+			//"All things being equal it is better to cooperate"
+			//TFT2010 Will not play nice again until the score is equal again
+			private var TFT2010:Boolean = false;
+			
+			private var GreedyChoice:String;
+			private var GreedyLast:String;
+			private var valueBothAgree:int;
+			private var valueBothDefects:int;
+			private var valueOneDefects:int;
+			private var TFTScore:int;
+			private var GreedyScore:int;
+			private var round:int = 0;
+			private var TFTChoice:String = "";
+			public var i:int = 0;
+			
+			
+			private function displayUsage():void{
+				Alert.show("This is a version of a classic paradox, known as the prisoners paradox, with a twist." +
+					"This version uses variable rewards instead of fixed ones.\n Also the 'Player' Greedy2010 " +
+					"allows you to model different levels of greed.\n\nTo apply a greed level choose a number to serve as a % of the maximum" +
+					" payout. If the current payout is higher than that percentage Greedy will analyze" +
+					" the the current situation and decide how to react. The higher the percentage the more agreeable the 'player' becomes." +
+					"\n\nTFT 2010 will only play nice again if the scores are equal.")
+			}
+			
+			public function setRound():void{
+				setChoices();
+					
+			}
+			private function setChoices():void{
+				var maxPay:int = maxPayout.value;
+				var totalPossible:int = 0;
+				var numberOfRounds:int = numberRounds.value;
+				var greedPer:int = greedPercent.value;
+				var GreedyLimit:int = 0;
+				var wantLead:int = Math.round(maxPay/4);
+				finalScore_txt.text = "Final Score TFT  Greedy2010=";
+				while(i<numberOfRounds){
+				valueOneDefects = Math.round((Math.random()*maxPay-1)+1);
+				totalPossible += valueOneDefects;
+				valueBothDefects = Math.round(valueOneDefects/4);
+				valueBothAgree = Math.round(valueOneDefects/2);
+				GreedyLimit = Math.round((maxPay/100)*greedPer);
+				
+				TFTChoice = TFTNext;
+				
+				//This is the decision logic for Greedy. It should look at the points and determine
+				//whether or not it stands to gain more than a 200 point advantage. If so it will take that path.
+				//from then on it will check to see if will maintain at least a x point advantage by playing nice.
+				if (GreedyLimit>valueOneDefects){
+					//If the value is low enough to play nice we consider if we
+					//played nice last round.
+					if(GreedyLast == "mean"){
+						if(GreedyScore-(TFTScore+valueOneDefects)>=wantLead){
+							//if Greedy will maintain a x point lead by playing nice it should play nice.
+							GreedyChoice = "nice";
+							GreedyLast = "nice";
+						}else{
+							//If Greedy would drop below a x point it should not play nice again.
+							output.text += "Greedy would not maintain a "+wantLead.toString()+" lead \nso it plays mean\n"
+							GreedyChoice = "mean";
+							GreedyLast = "mean";
+						}
+					}else{
+						//If Greedy played nice last round it should play nice again.
+						GreedyChoice = "nice";
+						GreedyLast = "nice";
+					}
+				}else{
+					//If the score is more than greedLimit Greedy should play mean and take it all.
+					GreedyChoice = "mean";
+					GreedyLast = "mean";
+				}
+				
+				if(TFTChoice=="nice"&&GreedyChoice=="nice"){
+					
+					output.text += "Random Value = "+valueOneDefects+" Greedy Threshold = "+GreedyLimit+"\n\n";
+					output.text += "Tit For Tat Played = "+TFTChoice+" Greedy Played = "+GreedyChoice+"\n\n";
+					TFTScore += valueBothAgree;
+					GreedyScore += valueBothAgree;
+					output.text += "Both get = "+valueBothAgree+"\n\n";
+					output.text += "Tit For Tat Score = "+TFTScore+" Greedy Score = "+GreedyScore+"\n";
+					
+				}else if(TFTChoice=="nice"&&GreedyChoice=="mean"){
+					
+					output.text += "Random Value = "+valueOneDefects+" Greedy Threshold = "+GreedyLimit+"\n\n";
+					output.text += "Tit For Tat Played = "+TFTChoice+" Greedy Played = "+GreedyChoice+"\n\n";
+					GreedyScore += valueOneDefects;
+					output.text += "Greedy gets = "+valueOneDefects+"\n\n";
+					output.text += "Tit For Tat Score = "+TFTScore+" Greedy Score = "+GreedyScore+"\n\n";
+					TFTNext = "mean";
+					
+				}else if(TFTChoice=="mean"&&GreedyChoice=="nice"){
+					
+					output.text += "Random Value = "+valueOneDefects+" Greedy Threshold = "+GreedyLimit+"\n\n";
+					output.text += "Tit For Tat Played = "+TFTChoice+" Greedy Played = "+GreedyChoice+"\n\n";
+					TFTScore += valueOneDefects;
+					output.text += "TFT gets = "+valueOneDefects+"\n\n";
+					output.text += "Tit For Tat Score = "+TFTScore+" Greedy Score = "+GreedyScore+"\n\n";
+					
+					//This is the logic for TFT2010. If the scores are not equal it will not
+					//play nice again.
+					if(TFT2010=true){
+						if(TFTScore<GreedyScore){
+							//if Greedy still has an advantage
+							output.text += "Greedy still has an advantage so TFT 2010 will still play mean.\n\n";
+							TFTNext = "mean";
+						}else{
+							//if Greedy is equal or less than. This is currently not
+							//possible, but in future versions will be used to test against other
+							//types of opponents.
+							TFTNext = "nice";
+						}
+					}else{
+						//if TFT is not the 2010 Version it should play
+						//it's opponents last move.
+						TFTNext = "nice";
+					}
+					
+				}else if(TFTChoice=="mean"&&GreedyChoice=="mean"){
+					
+					output.text += "Random Value = "+valueOneDefects+" Greedy Threshold = "+GreedyLimit+"\n\n";
+					output.text += "Tit For Tat Played = "+TFTChoice+" Greedy Played = "+GreedyChoice+"\n\n";
+					TFTScore += valueBothDefects;
+					GreedyScore += valueBothDefects;
+					output.text += "Both Get = "+valueBothDefects+"\n\n";
+					output.text += "Tit For Tat Score = "+TFTScore+" Greedy Score = "+GreedyScore+"\n\n";
+				}
+				i++;
+			}
+				finalScore_txt.text = "Final Score TFT= "+TFTScore+" Greedy2010= "+GreedyScore+"\n\n";
+				maxPayout_txt.text = "Max Payout Potential = "+totalPossible.toString();
+				i=0;
+		}
+			
+
+
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				finalScore_txt.text = "Final Score";
+				maxPayout_txt.text = "Max Payout Potential";
+				GreedyScore = 0;
+				GreedyLast = "";
+				TFTNext = "nice";
+				TFTScore = 0;
+				output.text = "";
+				i = 0;
+			}
+
+
+			protected function tft2010_clickHandler(event:MouseEvent):void
+			{
+				if(tft2010.selected = true){
+					TFT2010 = true;
+				}else{
+					TFT2010 = false;
+				}
+			}
+
+		]]>
+	</fx:Script>
+	<s:TextArea x="7" y="35" height="248" width="302" id="output"/>
+	<s:Label x="187.5" y="380" text="Set The Greed Level" height="23" verticalAlign="middle" width="119" fontSize="13"/>
+	<s:NumericStepper x="92.5" y="379" id="greedPercent" minimum="0" maximum="100" stepSize="1" width="77"/>
+	<s:Label x="189" y="355" text="Number of Rounds" height="23" verticalAlign="middle" width="117" fontSize="13" textAlign="left"/>
+	<s:NumericStepper x="92.5" y="354" id="numberRounds" minimum="1" maximum="100" stepSize="1" width="77"/>
+	<s:Label x="188.5" y="405" text="Set the Max Payout" height="23" verticalAlign="middle" width="119" fontSize="13"/>
+	<s:NumericStepper x="92.5" y="404" id="maxPayout" minimum="10" maximum="2000" stepSize="10"/>
+	<s:Label x="10.5" y="291.5" text="Final Score" fontWeight="bold" id="finalScore_txt" height="21" verticalAlign="middle"/>
+	<s:Label x="10" y="315" text="Max Payout Potential" fontWeight="bold" id="maxPayout_txt"/>
+	<s:Label x="51" y="10" text="Tit for Tat vs. Greedy2010" fontWeight="bold" fontSize="18"/>
+	<s:Button x="70.5" y="439" label="Run" id="run" width="77" click="setChoices()"/>
+	<s:Button x="167" y="439" label="Reset" click="button1_clickHandler(event)"/>
+	<s:Label x="89" y="468" text="Developed by Daniel Reilly"/>
+	<s:RadioButton x="93" y="335" label=" Tit for Tat 2010" selected="false" enabled="true" width="214" id="tft2010" click="tft2010_clickHandler(event)"/>
+</s:WindowedApplication>

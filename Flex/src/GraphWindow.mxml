@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Declarations>
+		
+		<s:SolidColor id="s1" color="#74BBED" alpha="1"/>
+		
+		<s:SolidColor id="s2" color="#31F73F" alpha="1"/>
+		
+		<s:SolidColor id="s3" color="#6c6c6c" alpha="1"/>
+		
+		<s:SolidColorStroke id="scs1" color="#000000" weight="1"/>
+		
+		<s:SolidColorStroke id="scs2" color="#000000" weight="1"/>
+		
+		<s:SolidColorStroke id="scs3" color="#000000" weight="1"/>
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+
+		<![CDATA[
+			
+			import mx.collections.ArrayCollection;
+			
+			private var p1Score:int = 673;
+			private var p2Score:int = 240;
+			private var matchM:int = 1200;
+			private var unclaimedP:int = matchM - (p1Score+p2Score);
+			
+			[Bindable]
+			public var student:ArrayCollection = new ArrayCollection([
+			
+				{Stream:"Competition", p1:p1Score, p2:p2Score, matchMax:unclaimedP},
+				
+			]);
+			
+		]]>
+		
+	</fx:Script>
+	
+	<s:Panel title="Dice Test Results" width="617">
+		
+		<s:layout>
+	
+			<s:HorizontalLayout/>
+			
+		</s:layout>
+		
+		<mx:BarChart id="barchart1"
+					 
+					 showDataTips="true"
+					 
+					 paddingBottom="10"
+					 
+					 paddingLeft="10"
+					 
+					 paddingRight="10"
+					 
+					 paddingTop="10"
+					 
+					 dataProvider="{student}"
+					 
+					 width="515">
+			
+			<mx:verticalAxis>
+				
+				<mx:CategoryAxis categoryField="Stream"
+								 
+								 dataProvider="{student}"/>
+				
+			</mx:verticalAxis>
+			
+			<mx:series>
+				
+				<mx:BarSeries id="as1"
+							  
+							  xField="p1"
+							  
+							  yField="Stream"
+							  
+							  displayName="Player 1"
+							  
+							  fill="{s1}"
+							  
+							  stroke="{scs1}"/>
+				
+				<mx:BarSeries id="as2"
+							  
+							  xField="p2"
+							  
+							  yField="Stream"
+							  
+							  displayName="Player 2"
+							  
+							  fill="{s2}"
+							  
+							  stroke="{scs2}"/>
+				
+				<mx:BarSeries id="as3"
+							  
+							  xField="matchMax"
+							  
+							  yField="Stream"
+							  
+							  displayName="Unclaimed"
+							  
+							  fill="{s3}"
+							  
+							  stroke="{scs3}"/>
+				
+			</mx:series>
+			
+		</mx:BarChart>
+		
+		<mx:Legend dataProvider="{barchart1}"/>
+		
+	</s:Panel>
+</s:WindowedApplication>

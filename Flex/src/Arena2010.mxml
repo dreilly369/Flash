@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/mx" width="404" height="500"
+					   creationComplete="init()" 
+					   width.graph="664" height.graph="570" 
+					   backgroundColor.State1="#7AC6F2" 
+					   backgroundColor.graph="#7AC6F2" 
+					   preloaderChromeColor.State1="#2020A9" 
+					   backgroundAlpha.State1="0.5">
+	<fx:Style source="Arena2010.css"/>
+	
+	<fx:Script>
+		<![CDATA[
+			import Classes.GreedyWindow;
+			import Classes.SetMatch;
+			
+			import mx.collections.ArrayCollection;
+			import mx.collections.IList;
+			import mx.controls.Alert;
+			import mx.core.Window;
+			
+			import spark.events.IndexChangeEvent;
+			
+			private var p1Score:int = 100;
+			private var p2Score:int = 100;
+			private var matchM:int = 750;
+			private var unclaimedP:int = matchM-(p1Score + p2Score);
+			private var num:NumericStepper = new NumericStepper();
+			private var playerNum:int = 0;
+			private var greedlvl:int = 0; 
+			private var sm:SetMatch = new SetMatch();
+			[Bindable]
+			private var p1Type:String = "";
+			[Bindable]
+			private var p2Type:String = "";
+			[Bindable]
+			public var student:ArrayCollection;
+			private var competition:SetMatch = new SetMatch();
+			private var numRounds:int = 1;
+			private var maximumPayout:int = 10;
+			[Bindable]
+			private var a:Array = new Array("Tit For Tat","Greedy2010","TFT2010");
+			[Bindable]
+			private var ac:ArrayCollection = new ArrayCollection(a);
+			[Bindable]
+			private var graphSrc:Array = new Array();
+			[Bindable]
+			private var ac2:ArrayCollection = new ArrayCollection(graphSrc);
+			
+			private function init():void{
+				
+				Alert.show("This is the arena for testing different combinations of Players " +
+					"and payout systems for the prisoners dilemma paradox.\n\n" +
+					"To control a Greedy player choose a Greed level when the window pops up." +
+					"This number represents what percentage the payout must reach of the total before the" +
+					" player will defect. The lower the number the more likely a player is to play mean.\n\n" +
+					"TFT2010 was an upgrade to the original TFT principal suggested by Anthony S." +
+					"TFT2010 states 'all things being equal it is preferable to play cooperative'");
+			}
+			
+			private function runTest(e:Event):void{
+				competition.playMatch();
+				compResults.text = competition.getResultText();
+				getRes();
+				
+			}
+			
+
+			protected function player1_changeHandler(event:IndexChangeEvent):void
+			{
+				if(player1.selectedIndex ==0){
+					competition.setP1TFT();
+				}
+				if(player1.selectedIndex ==1){
+					GreedyWindow(1);
+				}
+				if(player1.selectedIndex ==2){
+					competition.setP1TFT2010();
+				}
+			}
+			
+			protected function player2_changeHandler(event:IndexChangeEvent):void
+			{
+				if(player2.selectedIndex ==0){
+					competition.setP2TFT();
+				}
+				if(player2.selectedIndex == 1){
+					 GreedyWindow(2);
+				}
+				if(player2.selectedIndex ==2){
+					competition.setP2TFT2010();
+				}
+			}
+
+			protected function numberRounds_changeHandler(event:Event):void
+			{
+				competition.setRounds(numberRounds.value);
+			}
+
+			protected function maxPayout_changeHandler(event:Event):void
+			{
+				competition.setMaxPayout(maxPayout.value);
+			}
+
+
+			protected function reset_btn_clickHandler(event:MouseEvent):void
+			{
+				competition.resetBoard();
+				compResults.text ="";
+				player1.selectedIndex = -1;
+				player2.selectedIndex = -1;
+				maxPayout.value = 10;
+				numberRounds.value = 1;
+				p1Score = 0;
+				p2Score = 0;
+			}
+			
+			public function GreedyWindow(playerNumber:int):void
+			{
+				var newWin:Window = new Window();
+				newWin.id="win"+playerNum;
+				playerNum = playerNumber;
+				newWin.width = 250;
+				newWin.height = 400;
+				
+				
+				newWin.x = 5;
+				newWin.y = 100;
+				newWin.title = "Set The Greedy Level for the Player";
+				newWin.open(true);
+		
+				num.width = 200;
+				num.height 75;
+				num.maximum = 100;
+				num.minimum = 1;
+				num.x = 0;
+				num.y =  0;
+				num.addEventListener(Event.CHANGE, updateGr);
+				newWin.addElement(num);
+				
+				var btn:Button = new Button();
+				btn.width = 200;
+				btn.height 75;
+				btn.x = num.x;
+				btn.y = num.y+100;
+				btn.label = "Set";
+				btn.addEventListener(MouseEvent.CLICK, setPlayerGreedy);
+				newWin.addElement(btn);
+			}
+			
+			private function setPlayerGreedy(e:Event):void{
+				var ptype:String = "";
+				
+				if(playerNum==1){
+					competition.setP1Greedy(greedlvl);
+					ptype = competition.getP1Type();
+					e.target.parent.close();
+				}else{
+					competition.setP2Greedy(greedlvl);
+					ptype = competition.getP2Type();
+					e.target.parent.close();
+				}		
+			}
+			
+			private function updateGr(e:Event):void{
+				greedlvl = num.value;
+			}
+			
+			private function getRes():void{
+				
+				setGraph();
+			}
+			
+			private function setGraph():void
+			{
+				 p1Score = competition.getP1Score();
+				 p1Type = competition.getP1Type();
+				 p2Score = competition.getP2Score();
+				 p2Type = competition.getP2Type();
+				 var matchMax:int = competition.getCompMax();
+				 unclaimedP = matchMax - (p1Score+p2Score);
+				 student = new ArrayCollection([
+					 {Stream:"Competition", p1:p1Score, p2:p2Score, matchMax:unclaimedP},
+				 ]);
+				 //barchart1.dataProvider = student;
+				 this.currentState = "graph";
+				 stats_txt.text = p1Type+" scored "+p1Score+"\n";
+				 stats_txt.text += p2Type+" scored "+p2Score+"\n";
+				 stats_txt.text += matchMax+" Was the maximum available\n";
+				 //barchart1.dataProvider = student;
+			}
+
+
+			protected function return_btn_clickHandler(event:MouseEvent):void
+			{
+				this.currentState = "State1"
+			}
+
+
+			protected function claasicPay_clickHandler(e:MouseEvent):void
+			{
+					competition.setClassicPay("true");
+			}
+
+		]]>
+	</fx:Script>
+	<s:states>
+		<s:State name="State1"/>
+		<s:State name="graph"/>
+	</s:states>
+
+	<fx:Declarations>
+		
+		<s:SolidColor id="s1" color="#74BBED" alpha="1"/>
+		
+		<s:SolidColor id="s2" color="#31F73F" alpha="1"/>
+		
+		<s:SolidColor id="s3" color="#6c6c6c" alpha="1"/>
+		
+		<s:SolidColorStroke id="scs1" color="#000000" weight="1"/>
+		
+		<s:SolidColorStroke id="scs2" color="#000000" weight="1"/>
+		
+		<s:SolidColorStroke id="scs3" color="#000000" weight="1"/>
+		
+	</fx:Declarations>
+	
+	<s:Panel title="Competition Results" width="617" x="28" y="10" includeIn="graph">
+		
+		<s:layout>
+			
+			<s:HorizontalLayout/>
+			
+		</s:layout>
+		
+		<mx:BarChart id="barchart1"
+					 
+					 showDataTips="true"
+					 
+					 paddingBottom="10"
+					 
+					 paddingLeft="10"
+					 
+					 paddingRight="10"
+					 
+					 paddingTop="10"
+					 
+					 dataProvider="{student}"
+					 
+					 width="515">
+			
+			<mx:verticalAxis>
+				
+				<mx:CategoryAxis categoryField="Stream"
+								 
+								 dataProvider="{student}"/>
+				
+			</mx:verticalAxis>
+			
+			<mx:series>
+				
+				<mx:BarSeries id="as1"
+							  
+							  xField="p1"
+							  
+							  yField="Stream"
+							  
+							  displayName="{p1Type}"
+							  
+							  fill="{s1}"
+							  
+							  stroke="{scs1}"/>
+				
+				<mx:BarSeries id="as2"
+							  
+							  xField="p2"
+							  
+							  yField="Stream"
+							  
+							  displayName="{p2Type}"
+							  
+							  fill="{s2}"
+							  
+							  stroke="{scs2}"/>
+				
+				<mx:BarSeries id="as3"
+							  
+							  xField="matchMax"
+							  
+							  yField="Stream"
+							  
+							  displayName="Unclaimed"
+							  
+							  fill="{s3}"
+							  
+							  stroke="{scs3}"/>
+				
+			</mx:series>
+			
+		</mx:BarChart>
+		
+		<mx:Legend dataProvider="{barchart1}"/>
+		
+	</s:Panel>
+	
+	<s:TextArea x="10" y="10" width="384" id="compResults" editable="false" includeIn="State1" height="235"/>
+	<s:Label x="108" y="280" text="Number of Rounds" height="23" verticalAlign="middle" width="117" fontSize="13" textAlign="left" includeIn="State1"/>
+	<s:NumericStepper x="11.5" y="279" id="numberRounds" minimum="1" maximum="200" stepSize="1" width="77" change="numberRounds_changeHandler(event)" includeIn="State1"/>
+	<s:Label x="107.5" y="330" text="Set the Max Payout" height="23" verticalAlign="middle" width="119" fontSize="13" includeIn="State1"/>
+	<s:NumericStepper x="11.5" y="329" id="maxPayout" minimum="10" maximum="2000" stepSize="10" change="maxPayout_changeHandler(event)" includeIn="State1"/>
+	<s:Button x="118.5" y="393" label="Run" id="run" width="77" click="runTest(event)" includeIn="State1"/>
+	<s:Button x="217" y="393" label="Reset" id="reset_btn" click="reset_btn_clickHandler(event)" includeIn="State1"/>
+	<s:Label x="118" y="476" text="Developed by Daniel Reilly" includeIn="State1" fontSize="14"/>
+	<s:DropDownList x="263" y="279" id="player1" dataProvider="{ac}" change="player1_changeHandler(event)" includeIn="State1"></s:DropDownList>
+	<s:DropDownList x="263" y="330" id="player2" dataProvider="{ac}" change="player2_changeHandler(event)" includeIn="State1"></s:DropDownList>
+	<s:RadioButton x="14" y="253" label="Classic Payout System?" includeIn="State1" id="claasicPay" selected="false" enabled="true" click="claasicPay_clickHandler(event)"/>
+	<s:Label x="265" y="255" text="Player 1" height="23" verticalAlign="middle" width="117" fontSize="13" textAlign="left" includeIn="State1"/>
+	<s:Label x="265" y="307" text="Player 2" height="23" verticalAlign="middle" width="117" fontSize="13" textAlign="left" includeIn="State1"/>
+	<s:Button includeIn="graph" x="297" y="509" label="Return to Main" id="return_btn" click="return_btn_clickHandler(event)"/>
+	<s:Label includeIn="graph" x="28" y="475" text="Label" id="stats_txt"/>
+
+</s:WindowedApplication>
